@@ -34,7 +34,7 @@ Apply authentication and authorization mechanisms
 Integrate backend database logic with a web interface
 
 Demonstrate practical DBMS concepts in an enterprise context
-
+````
 🚀 Key Features
 
 ✔ Role-based login (Teacher & Student)
@@ -44,7 +44,7 @@ Demonstrate practical DBMS concepts in an enterprise context
 ✔ Database-backed persistent storage
 ✔ Search, edit, delete, and export functionality
 ✔ Clean and responsive user interface
-
+`````
 🧠 System Design Approach
 
 The system follows a database-centric web architecture:
@@ -80,7 +80,7 @@ Secure login
 View assigned student details
 
 Read-only access to records
-
+````
 🏗️ Project Structure
 student_management_system/
 │
@@ -99,7 +99,7 @@ student_management_system/
 │
 ├── LICENSE
 └── README.md
-
+````
 🔄 Application Workflow
 
 User logs in using assigned credentials
