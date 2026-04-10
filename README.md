@@ -17,14 +17,14 @@ This project goes beyond a basic CRUD application by implementing:
 * Data export functionality
 * Structured database design
 
----
+```
 
 ## 🏢 Internship & Project Context
 
-**Organization:** Rashtriya Ispat Nigam Limited (Vizag Steel Plant)
-**Department:** IT & ERP
-**Project Domain:** Database Management Systems & Enterprise IT Systems
-**Duration:** 4 Weeks (Dec 2024 – Jan 2025)
+**Organization:** Rashtriya Ispat Nigam Limited (Vizag Steel Plant)  
+**Department:** IT & ERP  
+**Project Domain:** DBMS & Enterprise IT Systems  
+**Duration:** Dec 2024 – Jan 2025
 
 This project reflects **hands-on exposure to enterprise workflows**, including:
 
@@ -32,6 +32,7 @@ This project reflects **hands-on exposure to enterprise workflows**, including:
 * Role-based system design
 * Backend-driven application architecture
 
+```
 ---
 
 ## 🎯 Objectives
@@ -99,7 +100,7 @@ SQLite Database
 * Read-only access
 
 ---
-
+```
 ## 🚀 Key Features
 
 ✔ Role-Based Access Control (RBAC)
@@ -110,7 +111,7 @@ SQLite Database
 ✔ Search Functionality (Name, Course, Class, Section)
 ✔ CSV Export of Student Data
 ✔ Responsive UI using Bootstrap
-
+```
 ---
 
 ## 📸 Application Screenshots
