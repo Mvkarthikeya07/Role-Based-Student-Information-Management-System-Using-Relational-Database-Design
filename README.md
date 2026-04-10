@@ -206,7 +206,7 @@ student_management_system/
 ### 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/your-username/student-management-system.git
+git clone https://github.com/Mvkarthikeya07/Role-Based-Student-Information-Management-System-Using-Relational-Database-Design
 cd student-management-system
 ```
 
