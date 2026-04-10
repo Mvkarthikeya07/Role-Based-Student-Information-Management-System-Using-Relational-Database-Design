@@ -17,6 +17,8 @@ This project goes beyond a basic CRUD application by implementing:
 * Data export functionality
 * Structured database design
 
+💡 This system simulates a real-world academic ERP module, demonstrating how structured data systems, role-based access, and backend-driven workflows are implemented in enterprise environments.
+
 ```
 
 ## 🏢 Internship & Project Context
