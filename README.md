@@ -1,213 +1,306 @@
- 🎓 Role-Based Student Information Management System Using Relational Database Design
+# 🎓 Role-Based Student Information Management System
 
-A Role-Based Database Management System for Academic Institutions
+## 🚀 Enterprise-Style DBMS Web Application with Role-Based Access Control
 
-📌 Overview
+---
 
-The Student Management System is a database-driven web application designed to manage student records efficiently through a role-based access control system. The application enables secure login for teachers and students, allowing controlled access to academic records stored in a relational database.
+## 📌 Overview
 
-This project was developed as part of an industrial internship, focusing on Database Management Systems (DBMS) and IT-enabled enterprise systems, demonstrating how backend databases integrate with web-based interfaces in real-world organizational environments.
+The **Role-Based Student Information Management System** is a full-stack, database-driven web application designed to manage student records securely and efficiently within an academic environment.
 
-🏢 Internship & Project Details
+Built using **Flask (Python)** and **SQLite**, the system demonstrates how modern web applications integrate **backend logic, relational databases, and role-based authentication** to simulate real-world enterprise IT systems.
 
-Organization: Rashtriya Ispat Nigam Limited (Vizag Steel Plant)
+This project goes beyond a basic CRUD application by implementing:
 
-Department: IT & ERP Department
+* Role-based dashboards
+* Multi-step password recovery
+* Data export functionality
+* Structured database design
 
-Project Title: Database Management System
+---
 
-Duration: 4 Weeks
-(December 6, 2024 – January 31, 2025)
+## 🏢 Internship & Project Context
 
-Domain: DBMS + IT Systems
+**Organization:** Rashtriya Ispat Nigam Limited (Vizag Steel Plant)
+**Department:** IT & ERP
+**Project Domain:** Database Management Systems & Enterprise IT Systems
+**Duration:** 4 Weeks (Dec 2024 – Jan 2025)
 
-This project reflects practical exposure to enterprise-level data handling, role-based access, and IT system workflows used in large-scale organizations.
+This project reflects **hands-on exposure to enterprise workflows**, including:
 
-🎯 Objectives
+* Data handling and persistence
+* Role-based system design
+* Backend-driven application architecture
 
-Design a secure, role-based student information system
+---
 
-Implement CRUD operations using a relational database
+## 🎯 Objectives
 
-Apply authentication and authorization mechanisms
+* Design a **secure, role-based student management system**
+* Implement **CRUD operations** using relational databases
+* Apply **authentication and session management**
+* Integrate **Flask backend with dynamic HTML templates**
+* Demonstrate **real-world DBMS concepts in a web environment**
 
-Integrate backend database logic with a web interface
+---
 
-Demonstrate practical DBMS concepts in an enterprise context
-````
-🚀 Key Features
+## 🧠 System Architecture
 
-✔ Role-based login (Teacher & Student)
-✔ Secure authentication system
-✔ Teacher dashboard for managing student records
-✔ Student dashboard for viewing assigned data
-✔ Database-backed persistent storage
-✔ Search, edit, delete, and export functionality
-✔ Clean and responsive user interface
-`````
-🧠 System Design Approach
+The application follows a **database-centric architecture**:
 
-The system follows a database-centric web architecture:
+```
+Client (Browser)
+   ↓
+Flask Backend (Routes + Logic)
+   ↓
+SQLite Database
+```
 
-Core Concepts Applied
+### Core Concepts Applied
 
-Relational Database Design (SQLite)
+* Relational Database Design
+* Role-Based Access Control (RBAC)
+* Session-Based Authentication
+* Server-Side Rendering (Jinja2)
+* CRUD Operations
+* Separation of Concerns
 
-Role-Based Access Control (RBAC)
+---
 
-Server-side validation
+## 🔐 Authentication & Security Features
 
-CRUD operations
+* Role-based login (Teacher / Student)
+* Session management using Flask
+* Multi-step password recovery system:
 
-Separation of concerns (UI, logic, database)
+  * Username verification
+  * Security question validation
+  * Password reset
+* Token-based password reset structure (extensible)
 
-User Roles
+> ⚠️ Note: Password hashing and advanced security mechanisms can be added as future enhancements.
 
-Teacher
+---
 
-Add new student records
+## 👥 User Roles & Capabilities
 
-Edit and delete existing records
+### 👩‍🏫 Teacher
 
-Search students by name or course
+* Add student records
+* Edit and update student data
+* Delete records
+* Search students (multi-field)
+* Export data to CSV
 
-Export student data to CSV
+### 🎓 Student
 
-Student
+* Secure login
+* View student records
+* Read-only access
 
-Secure login
+---
 
-View assigned student details
+## 🚀 Key Features
 
-Read-only access to records
-````
-🏗️ Project Structure
+✔ Role-Based Access Control (RBAC)
+✔ Authentication System with Session Handling
+✔ Multi-Step Password Recovery
+✔ Teacher Dashboard (Full CRUD Operations)
+✔ Student Dashboard (Read-Only Access)
+✔ Search Functionality (Name, Course, Class, Section)
+✔ CSV Export of Student Data
+✔ Responsive UI using Bootstrap
+
+---
+
+## 📸 Application Screenshots
+
+📌 Below are real screenshots of the working application demonstrating authentication, role-based access, and CRUD operations.
+
+### 🔐 Login Page
+<img width="1366" height="768" alt="Screenshot (24)" src="https://github.com/user-attachments/assets/89f0073f-b3c9-4588-99a4-cb76d4c42894" />
+
+### 👩‍🏫 Teacher Dashboard
+<img width="1366" height="768" alt="Screenshot (23)" src="https://github.com/user-attachments/assets/fd273bdc-a06e-4d5f-ac4b-6102e41d7b9d" />
+
+### 🎓 Student Dashboard
+<img width="1366" height="768" alt="Screenshot (26)" src="https://github.com/user-attachments/assets/90640182-f1ec-46fd-bc55-d8bca7bb9fff" />
+
+### ✏️ Edit Student
+<img width="1366" height="768" alt="Screenshot (27)" src="https://github.com/user-attachments/assets/5d842889-2a30-4939-9899-ae6433f33a31" />
+
+### 📝 Create Account
+<img width="1366" height="768" alt="Screenshot (25)" src="https://github.com/user-attachments/assets/b75758ba-79ac-4218-88fe-04df9cf6fd9d" />
+
+---
+
+## 🗄️ Database Design
+
+### 📋 Users Table
+
+* id
+* username
+* password
+* email
+* role
+* security_question
+* security_answer
+
+### 📋 Students Table
+
+* id
+* name
+* course
+* class
+* section
+* parent_phone
+* parent_email
+
+### 📋 Password Reset Table
+
+* id
+* username
+* token
+* created_at
+* expires_at
+
+---
+
+## 🔄 Application Workflow
+
+1. User logs in with credentials
+2. System validates role (Teacher / Student)
+3. Redirect to appropriate dashboard
+4. Teacher performs CRUD operations
+5. Student views records (restricted access)
+6. Password recovery available via multi-step verification
+
+---
+
+## 📁 Project Structure
+
+```
 student_management_system/
 │
-├── static/
-│   └── style.css                   # Application styling
-│
 ├── templates/
-│   ├── login.html                  # Login page
-│   ├── teacher_dashboard.html      # Teacher dashboard
-│   ├── student_dashboard.html      # Student dashboard
-│   └── edit.html                   # Edit student details
+│   ├── login.html
+│   ├── create_account.html
+│   ├── forgot_password.html
+│   ├── reset_password.html
+│   ├── teacher_dashboard.html
+│   ├── student_dashboard.html
+│   ├── edit.html
 │
-├── app.py                          # Flask application entry point
-├── init_db.py                      # Database initialization script
-├── students.db                    # SQLite database
+├── app.py
+├── students.db
 │
-├── LICENSE
-└── README.md
-````
-🔄 Application Workflow
+├── requirements.txt
+├── README.md
+└── LICENSE
+```
 
-User logs in using assigned credentials
+---
 
-System validates role (Teacher / Student)
+## ⚙️ Installation & Setup
 
-User is redirected to the respective dashboard
+### 1️⃣ Clone Repository
 
-Teacher performs database operations (CRUD)
+```bash
+git clone https://github.com/your-username/student-management-system.git
+cd student-management-system
+```
 
-Student views assigned records securely
+### 2️⃣ Create Virtual Environment (Optional)
 
-🖥️ Application Screenshots
-Login Interface
-
-<img width="1366" height="768" alt="Screenshot (60)" src="https://github.com/user-attachments/assets/09119cde-36df-43ed-9b51-b071b76f335f" />
-
-Secure login page for both teachers and students.
-
-Teacher Dashboard
-
-<img width="1366" height="768" alt="Screenshot (61)" src="https://github.com/user-attachments/assets/0ccdb0be-b82e-469f-a9a7-ce4e29725c93" />
-
-Teacher interface for adding, editing, searching, and exporting student records.
-
-Student Login
-
-<img width="1366" height="768" alt="Screenshot (62)" src="https://github.com/user-attachments/assets/537002f6-ea25-44dd-baf5-25068b5a12fd" />
-
-Student authentication interface with restricted access.
-
-Student Dashboard
-
-<img width="1366" height="768" alt="Screenshot (63)" src="https://github.com/user-attachments/assets/1eba4bf2-cb27-4af9-a88a-78df128c00f9" />
-
-Read-only dashboard allowing students to view their records.
-
-⚙️ Installation & Usage
-1️⃣ Clone the Repository
-git clone <your-repository-url>
-cd student_management_system
-
-2️⃣ Create a Virtual Environment (Optional)
+```bash
 python -m venv venv
-source venv/binactivate     # Windows: venv\Scripts\activate
+venv\Scripts\activate  # Windows
+```
 
-3️⃣ Install Dependencies
+### 3️⃣ Install Dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-4️⃣ Initialize Database
-python init_db.py
+### 4️⃣ Run Application
 
-5️⃣ Run the Application
+```bash
 python app.py
+```
 
-6️⃣ Access the Application
+### 5️⃣ Access App
+
+```
 http://127.0.0.1:5000/login
+```
 
-🧪 Technologies Used
+---
 
-Python
+## 🧪 Tech Stack
 
-Flask
+* **Backend:** Python, Flask
+* **Database:** SQLite
+* **Frontend:** HTML, Bootstrap
+* **Data Handling:** Pandas (CSV export)
 
-SQLite
+---
 
-HTML & CSS
+## 🔬 Technical Highlights
 
-CSV Export
+* Full-stack DBMS application
+* Role-based access control implementation
+* Multi-step authentication flow
+* Clean backend routing structure
+* Database-driven dynamic rendering
+* Export functionality using Pandas
 
-Role-Based Authentication
+---
 
-🔬 Technical Highlights
+## ⚠️ Limitations
 
-Database-driven web application
+* Passwords stored without hashing (can be improved)
+* Security questions are basic
+* No CSRF protection
+* Limited frontend interactivity (no AJAX)
 
-Secure role-based access control
+---
 
-Clean separation of frontend and backend
+## 🔮 Future Enhancements
 
-Persistent data storage using SQLite
+* 🔐 Password hashing (bcrypt)
+* 📧 Email-based OTP authentication
+* 🧾 Attendance & grading system
+* 📊 Dashboard analytics (charts)
+* 🧑‍💼 Admin role implementation
+* 🌐 REST API + React frontend
+* 🛢️ Migration to MySQL/PostgreSQL
 
-Designed following real-world IT system practices
+---
 
-🔮 Future Enhancements
+## 👤 Author
 
-Password hashing and encryption
-
-User registration module
-
-Attendance and marks management
-
-Migration to MySQL / PostgreSQL
-
-ERP system integration
-
-👤 Author
-
-M V Karthikeya
+**M V Karthikeya**
 Computer Science Engineer
-Interests: Database Systems, Backend Development, IT Systems
 
-GitHub: https://github.com/Mvkarthikeya07
+**Interests:**
 
-📜 License
+* Database Systems
+* Backend Development
+* AI Systems & Automation
 
-This project is licensed under the MIT License.
+🔗 GitHub: [https://github.com/Mvkarthikeya07](https://github.com/Mvkarthikeya07)
 
-⭐ Final Remarks
+---
 
-This project represents a real-world database management system, developed under an industrial internship environment, demonstrating strong understanding of DBMS concepts, IT workflows, and enterprise-grade system design.
+## 📜 License
+
+This project is licensed under the **MIT License**.
+
+---
+
+## ⭐ Final Remarks
+
+This project demonstrates a **strong foundation in database-driven application development**, combining **DBMS concepts, backend engineering, and role-based system design**.
+
+It reflects practical exposure to **real-world IT systems** and serves as a solid base for building **scalable, production-grade applications**.
