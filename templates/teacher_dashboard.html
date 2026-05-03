@@ -1,103 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-primary">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Teacher Dashboard</span>
-            <a href="{{ url_for('logout') }}" class="btn btn-light btn-sm">Logout</a>
-        </div>
-    </nav>
-
-    <div class="container py-4">
-        {% if db_error %}
-        <div class="alert alert-danger" role="alert">
-            {{ db_error }}
-        </div>
-        {% endif %}
-        <div class="card shadow-sm p-3 mb-4">
-            <h5>Add Student</h5>
-            <form class="row g-2" method="POST" action="{{ url_for('add_student') }}">
-                <div class="col-md-3">
-                    <input type="text" name="register_no" class="form-control" placeholder="Register No" required>
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="name" class="form-control" placeholder="Student Name" required>
-                </div>
-                <div class="col-md-3">
-                    <input type="date" name="year_of_joining" class="form-control" required>
-                </div>
-                <div class="col-md-2">
-                    <input type="text" name="class" class="form-control" placeholder="Class" required>
-                </div>
-                <div class="col-md-2">
-                    <input type="text" name="section" class="form-control" placeholder="Section" required>
-                </div>
-                <div class="col-md-4">
-                    <input type="tel" name="parent_phone" class="form-control" placeholder="10-digit mobile (without +91)" pattern="[0-9]{10}" maxlength="10" required>
-                </div>
-                <div class="col-md-4">
-                    <input type="email" name="parent_email" class="form-control" placeholder="Parent Email" required>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-success w-100">Add</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="card shadow-sm p-3 mb-4">
-            <h5>Search Students</h5>
-            <form class="d-flex" method="POST" action="{{ url_for('search_student') }}">
-                <input type="text" name="keyword" class="form-control me-2" placeholder="Search by register no, year of joining, name, class or section">
-                <button class="btn btn-outline-primary">Search</button>
-            </form>
-        </div>
-
-        <div class="card shadow-sm p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5>Student Records</h5>
-                <a href="{{ url_for('export_students') }}" class="btn btn-outline-success btn-sm">Export to CSV</a>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-primary">
-                        <tr>
-                            <th>Register No</th>
-                            <th>Name</th>
-                            <th>Year of Joining</th>
-                            <th>Class</th>
-                            <th>Section</th>
-                            <th>Parent Phone</th>
-                            <th>Parent Email</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for student in students %}
-                        <tr>
-                            <td>{{ student.register_no }}</td>
-                            <td>{{ student.name }}</td>
-                            <td>{{ student.year_of_joining }}</td>
-                            <td>{{ student["class"] }}</td>
-                            <td>{{ student.section }}</td>
-                            <td>{{ student.parent_phone }}</td>
-                            <td>{{ student.parent_email }}</td>
-                            <td>
-                                <a href="{{ url_for('edit_student', student_id=student.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <a href="{{ url_for('delete_student', student_id=student.id) }}" class="btn btn-sm btn-danger">Delete</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+﻿{% extends "base.html" %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block body %}
+<div class="app-header">
+    <div>
+        <div class="brand-chip">Teacher Panel</div>
     </div>
-</body>
-</html>
+    <a href="{{ url_for('logout') }}" class="btn btn-soft">Logout</a>
+</div>
+
+{% if db_error %}
+<div class="alert alert-danger">{{ db_error }}</div>
+{% endif %}
+
+<div class="surface-card mb-4">
+    <h5 class="mb-3">Add Student</h5>
+    <form class="row g-3" method="POST" action="{{ url_for('add_student') }}">
+        <div class="col-md-3"><input type="text" name="register_no" class="form-control" placeholder="Register No" required></div>
+        <div class="col-md-3"><input type="text" name="name" class="form-control" placeholder="Student Name" required></div>
+        <div class="col-md-3"><input type="date" name="year_of_joining" class="form-control" required></div>
+        <div class="col-md-3"><input type="text" name="class" class="form-control" placeholder="Class" required></div>
+        <div class="col-md-3"><input type="text" name="section" class="form-control" placeholder="Section" required></div>
+        <div class="col-md-3"><input type="tel" name="parent_phone" class="form-control" placeholder="10-digit mobile" pattern="[0-9]{10}" maxlength="10" required></div>
+        <div class="col-md-4"><input type="email" name="parent_email" class="form-control" placeholder="Parent Email" required></div>
+        <div class="col-md-2 d-grid"><button class="btn btn-modern">Add</button></div>
+    </form>
+</div>
+
+<div class="surface-card mb-4">
+    <h5 class="mb-3">Search Students</h5>
+    <form class="d-flex gap-2" method="POST" action="{{ url_for('search_student') }}">
+        <input type="text" name="keyword" class="form-control" placeholder="Search by register no, year, name, class or section">
+        <button class="btn btn-soft">Search</button>
+    </form>
+</div>
+
+<div class="surface-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Student Records</h5>
+        <a href="{{ url_for('export_students') }}" class="btn btn-soft btn-sm">Export CSV</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-modern align-middle">
+            <thead>
+                <tr>
+                    <th>Register No</th>
+                    <th>Name</th>
+                    <th>Year of Joining</th>
+                    <th>Class</th>
+                    <th>Section</th>
+                    <th>Parent Phone</th>
+                    <th>Parent Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.register_no }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.year_of_joining }}</td>
+                    <td>{{ student["class"] }}</td>
+                    <td>{{ student.section }}</td>
+                    <td>{{ student.parent_phone }}</td>
+                    <td>{{ student.parent_email }}</td>
+                    <td class="d-flex gap-2">
+                        <a href="{{ url_for('edit_student', student_id=student.id) }}" class="btn btn-soft btn-sm">Edit</a>
+                        <a href="{{ url_for('delete_student', student_id=student.id) }}" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center muted py-4">No records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

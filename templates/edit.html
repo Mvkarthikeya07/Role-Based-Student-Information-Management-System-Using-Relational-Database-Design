@@ -1,57 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Student</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <div class="card shadow-sm p-4" style="max-width: 600px; margin: auto;">
-            <h4 class="mb-3">Edit Student</h4>
-            <form method="POST">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Register No</label>
-                        <input type="text" name="register_no" class="form-control" value="{{ student.register_no }}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" name="name" class="form-control" value="{{ student.name }}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Year of Joining</label>
-                        <input type="date" name="year_of_joining" class="form-control" value="{{ student.year_of_joining }}" required>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Class</label>
-                        <input type="text" name="class" class="form-control" value="{{ student['class'] }}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Section</label>
-                        <input type="text" name="section" class="form-control" value="{{ student.section }}" required>
-                    </div>
-                </div>
+﻿{% extends "base.html" %}
+{% block title %}Edit Student{% endblock %}
+{% block body %}
+<div class="app-header">
+    <div><div class="brand-chip">Edit Student</div></div>
+    <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-soft">Back</a>
+</div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Parent Phone</label>
-                        <input type="tel" name="parent_phone" class="form-control" value="{{ student.parent_phone | replace('+91', '') }}" pattern="[0-9]{10}" maxlength="10" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Parent Email</label>
-                        <input type="email" name="parent_email" class="form-control" value="{{ student.parent_email }}" required>
-                    </div>
-                </div>
-
-                <button class="btn btn-primary w-100">Update</button>
-                <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary w-100 mt-2">Cancel</a>
-            </form>
+<div class="surface-card" style="max-width: 760px; margin: 0 auto;">
+    <form method="POST" class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Register No</label>
+            <input type="text" name="register_no" class="form-control" value="{{ student.register_no }}" required>
         </div>
-    </div>
-</body>
-</html>
+        <div class="col-md-6">
+            <label class="form-label">Name</label>
+            <input type="text" name="name" class="form-control" value="{{ student.name }}" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Year of Joining</label>
+            <input type="date" name="year_of_joining" class="form-control" value="{{ student.year_of_joining }}" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Class</label>
+            <input type="text" name="class" class="form-control" value="{{ student['class'] }}" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Section</label>
+            <input type="text" name="section" class="form-control" value="{{ student.section }}" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Parent Phone</label>
+            <input type="tel" name="parent_phone" class="form-control" value="{{ student.parent_phone | replace('+91', '') }}" pattern="[0-9]{10}" maxlength="10" required>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Parent Email</label>
+            <input type="email" name="parent_email" class="form-control" value="{{ student.parent_email }}" required>
+        </div>
+        <div class="col-12 d-flex gap-2 mt-2">
+            <button class="btn btn-modern">Update</button>
+            <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-soft">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

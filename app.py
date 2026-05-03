@@ -72,20 +72,27 @@ def login():
         username = request.form["username"].strip()
         password = request.form["password"]
 
-        # Use Supabase Auth for authentication
-        auth_result = get_db().sign_in_user(username, password)
-        if auth_result:
-            user = auth_result["user"]
-            auth_session = auth_result.get("session")
+        try:
+            # Use Supabase Auth for authentication
+            auth_result = get_db().sign_in_user(username, password)
+            if auth_result:
+                user = auth_result["user"]
+                auth_session = auth_result.get("session")
 
-            session["username"] = user["username"]
-            session["role"] = user["role"]
-            if auth_session:
-                session["sb_access_token"] = auth_session.access_token
-                session["sb_refresh_token"] = auth_session.refresh_token
-            return redirect(url_for("home"))
-        else:
-            error = "Invalid Credentials"
+                session["username"] = user["username"]
+                session["role"] = user["role"]
+                if auth_session:
+                    session["sb_access_token"] = auth_session.access_token
+                    session["sb_refresh_token"] = auth_session.refresh_token
+                return redirect(url_for("home"))
+            else:
+                error = "Invalid Credentials"
+        except Exception as exc:
+            message = str(exc)
+            if "Email not confirmed" in message:
+                error = "Please confirm your email before logging in. Check your inbox/spam for the verification link."
+            else:
+                error = "Login failed. Please try again."
     return render_template("login.html", error=error)
 
 @app.route("/logout")
@@ -158,7 +165,7 @@ def create_account():
             if sign_up_session:
                 session["sb_access_token"] = sign_up_session.access_token
                 session["sb_refresh_token"] = sign_up_session.refresh_token
-            success = "Account created successfully! You can now login."
+            success = "Account created successfully. If email confirmation is enabled, verify your email first, then login."
             return render_template("create_account.html", success=success, questions=SECURITY_QUESTIONS, form_data=form_data)
         except Exception as e:
             error = f"Error creating account: {str(e)}"

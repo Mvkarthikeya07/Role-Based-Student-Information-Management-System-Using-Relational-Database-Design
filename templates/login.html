@@ -1,51 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Student Management System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container d-flex justify-content-center align-items-center vh-100">
-        <div class="card shadow-lg p-4" style="width: 400px;">
-            <h3 class="text-center mb-3">Student Management System</h3>
-            <h5 class="text-center text-primary mb-4">Login</h5>
-            {% if error %}
-                <div class="alert alert-danger text-center">{{ error }}</div>
-            {% endif %}
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" name="username" class="form-control" placeholder="Enter username" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <div class="input-group">
-                        <input type="password" id="login_password" name="password" class="form-control" placeholder="Enter password" required>
-                        <button class="btn btn-outline-secondary" type="button" id="toggle_login_password" aria-label="Show password">👁</button>
-                    </div>
-                </div>
-                <button class="btn btn-primary w-100">Login</button>
-            </form>
-            <div class="text-center mt-3">
-                <a href="{{ url_for('forgot_password') }}" class="text-decoration-none">Forgot Password?</a>
+﻿{% extends "base.html" %}
+{% block title %}Login | Student Management System{% endblock %}
+{% block body %}
+<div class="auth-wrap">
+    <div class="surface-card auth-card">
+        <div class="text-center mb-4">
+            <div class="brand-chip mx-auto mb-3" style="width:max-content;">SIMS Portal</div>
+            <h2 class="mb-1">Welcome Back</h2>
+            <p class="muted mb-0">Sign in to continue.</p>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Username or Email</label>
+                <input type="text" name="username" class="form-control" placeholder="Enter username or email" required>
             </div>
-            <div class="text-center mt-2">
-                <p>Don't have an account? <a href="{{ url_for('create_account') }}" class="text-decoration-none">Create Account</a></p>
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <div class="input-group">
+                    <input type="password" id="login_password" name="password" class="form-control" placeholder="Enter password" required>
+                    <button class="btn btn-soft" type="button" id="toggle_login_password" aria-label="Show password">Show</button>
+                </div>
             </div>
+            <button class="btn btn-modern w-100">Login</button>
+        </form>
+
+        <div class="d-flex justify-content-between mt-3">
+            <a href="{{ url_for('forgot_password') }}" class="text-decoration-none">Forgot Password?</a>
+            <a href="{{ url_for('create_account') }}" class="text-decoration-none">Create Account</a>
         </div>
     </div>
-    <script>
-        const loginPassword = document.getElementById('login_password');
-        const loginToggle = document.getElementById('toggle_login_password');
-        if (loginPassword && loginToggle) {
-            loginToggle.addEventListener('click', function () {
-                const isHidden = loginPassword.type === 'password';
-                loginPassword.type = isHidden ? 'text' : 'password';
-                loginToggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-            });
-        }
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+const loginPassword = document.getElementById('login_password');
+const loginToggle = document.getElementById('toggle_login_password');
+if (loginPassword && loginToggle) {
+    loginToggle.addEventListener('click', function () {
+        const isHidden = loginPassword.type === 'password';
+        loginPassword.type = isHidden ? 'text' : 'password';
+        loginToggle.textContent = isHidden ? 'Hide' : 'Show';
+    });
+}
+</script>
+{% endblock %}
