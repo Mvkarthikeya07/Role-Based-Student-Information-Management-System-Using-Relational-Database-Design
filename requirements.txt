@@ -1,0 +1,7 @@
+Flask==2.3.3
+pandas==2.1.4
+Werkzeug==2.3.7
+gunicorn==21.2.0
+numpy>=1.26.0
+supabase==2.0.2
+python-dotenv==1.0.0
