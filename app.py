@@ -1,14 +1,41 @@
 ﻿import os
-from flask import Flask, render_template, request, redirect, url_for, session, send_file
+import re
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, g
 from db import DatabaseOps
 import pandas as pd
 from io import BytesIO
+from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")  # Required for login sessions
 
-# Initialize database connection
-db = DatabaseOps()
+
+def get_db() -> DatabaseOps:
+    """Create DB client lazily per request to avoid import-time crashes in serverless."""
+    if "db" not in g:
+        g.db = DatabaseOps()
+    return g.db
+
+
+@app.teardown_appcontext
+def teardown_db(_exception):
+    g.pop("db", None)
+
+
+def is_strong_password(password: str) -> bool:
+    """Standard password policy."""
+    if len(password) < 8:
+        return False
+    if not re.search(r"[A-Z]", password):
+        return False
+    if not re.search(r"[a-z]", password):
+        return False
+    if not re.search(r"[0-9]", password):
+        return False
+    if not re.search(r"[^A-Za-z0-9]", password):
+        return False
+    return True
+
 
 # Security Questions Pool
 SECURITY_QUESTIONS = [
@@ -43,7 +70,7 @@ def login():
         password = request.form["password"]
 
         # Use Supabase for authentication
-        user = db.verify_user_password(username, password)
+        user = get_db().verify_user_password(username, password)
 
         if user:
             session["username"] = user["username"]
@@ -77,9 +104,9 @@ def create_account():
             error = "Passwords do not match"
             return render_template("create_account.html", error=error, questions=SECURITY_QUESTIONS)
         
-        # Validate password length
-        if len(password) < 4:
-            error = "Password must be at least 4 characters long"
+        # Validate password strength
+        if not is_strong_password(password):
+            error = "Password must be at least 8 chars with uppercase, lowercase, number, and special character"
             return render_template("create_account.html", error=error, questions=SECURITY_QUESTIONS)
         
         # Validate security answer
@@ -88,14 +115,14 @@ def create_account():
             return render_template("create_account.html", error=error, questions=SECURITY_QUESTIONS)
         
         # Check if username already exists
-        existing_user = db.get_user_by_username(username)
+        existing_user = get_db().get_user_by_username(username)
         if existing_user:
             error = "Username already exists"
             return render_template("create_account.html", error=error, questions=SECURITY_QUESTIONS)
         
         try:
             # Create user in Supabase
-            db.create_user(username, password, email, role, security_question, security_answer)
+            get_db().create_user(username, password, email, role, security_question, security_answer)
             success = "Account created successfully! You can now login."
             return render_template("create_account.html", success=success, questions=SECURITY_QUESTIONS)
         except Exception as e:
@@ -110,7 +137,7 @@ def teacher_dashboard():
     if "role" not in session or session["role"] != "teacher":
         return redirect(url_for("login"))
 
-    students = db.get_all_students()
+    students = get_db().get_all_students()
     return render_template("teacher_dashboard.html", students=students)
 
 @app.route("/add", methods=["POST"])
@@ -126,12 +153,12 @@ def add_student():
     parent_phone = request.form["parent_phone"]
     parent_email = request.form["parent_email"]
     
-    existing = db.get_student_by_register_no(register_no)
+    existing = get_db().get_student_by_register_no(register_no)
     if existing:
         return redirect(url_for("teacher_dashboard"))
 
     try:
-        db.create_student(register_no, name, year_of_joining, class_name, section, parent_phone, parent_email)
+        get_db().create_student(register_no, name, year_of_joining, class_name, section, parent_phone, parent_email)
     except ValueError:
         return redirect(url_for("teacher_dashboard"))
     return redirect(url_for("teacher_dashboard"))
@@ -151,17 +178,17 @@ def edit_student(student_id):
             "parent_phone": request.form["parent_phone"],
             "parent_email": request.form["parent_email"]
         }
-        duplicate = db.get_student_by_register_no(update_data["register_no"])
+        duplicate = get_db().get_student_by_register_no(update_data["register_no"])
         if duplicate and duplicate["id"] != student_id:
             return redirect(url_for("edit_student", student_id=student_id))
 
         try:
-            db.update_student(student_id, **update_data)
+            get_db().update_student(student_id, **update_data)
         except ValueError:
             return redirect(url_for("edit_student", student_id=student_id))
         return redirect(url_for("teacher_dashboard"))
     
-    student = db.get_student_by_id(student_id)
+    student = get_db().get_student_by_id(student_id)
     if not student:
         return redirect(url_for("teacher_dashboard"))
     return render_template("edit.html", student=student)
@@ -171,7 +198,7 @@ def delete_student(student_id):
     if "role" not in session or session["role"] != "teacher":
         return redirect(url_for("login"))
     
-    db.delete_student(student_id)
+    get_db().delete_student(student_id)
     return redirect(url_for("teacher_dashboard"))
 
 @app.route("/search", methods=["POST"])
@@ -180,7 +207,7 @@ def search_student():
         return redirect(url_for("login"))
 
     keyword = request.form["keyword"]
-    students = db.search_students(keyword)
+    students = get_db().search_students(keyword)
     return render_template("teacher_dashboard.html", students=students)
 
 @app.route("/export")
@@ -188,7 +215,7 @@ def export_students():
     if "role" not in session or session["role"] != "teacher":
         return redirect(url_for("login"))
     
-    students = db.get_all_students()
+    students = get_db().get_all_students()
     df = pd.DataFrame(students)
     
     # Create in-memory CSV file
@@ -204,7 +231,7 @@ def student_dashboard():
     if "role" not in session or session["role"] != "student":
         return redirect(url_for("login"))
     
-    students = db.get_all_students()
+    students = get_db().get_all_students()
     return render_template("student_dashboard.html", students=students)
 
 # ---------- Forgot Password ----------
@@ -226,7 +253,7 @@ def forgot_password():
             if not username:
                 error = "Please enter a username"
             else:
-                user = db.get_user_by_username(username)
+                user = get_db().get_user_by_username(username)
                 
                 if user:
                     security_question = user["security_question"]
@@ -240,7 +267,7 @@ def forgot_password():
             username = request.form.get("username", "").strip()
             security_answer = request.form.get("security_answer", "").lower().strip()
             
-            user = db.get_user_by_username(username)
+            user = get_db().get_user_by_username(username)
             
             if user:
                 stored_answer = user["security_answer"].lower().strip() if user["security_answer"] else ""
@@ -267,13 +294,13 @@ def forgot_password():
                 show_password_form = True
                 show_reset_form = True
                 username_verified = username
-            elif len(new_password) < 4:
-                error = "Password must be at least 4 characters long"
+            elif not is_strong_password(new_password):
+                error = "Password must be at least 8 chars with uppercase, lowercase, number, and special character"
                 show_password_form = True
                 show_reset_form = True
                 username_verified = username
             else:
-                db.update_user_password(username, new_password)
+                get_db().update_user_password(username, new_password)
                 success = "Password reset successfully! You can now login."
     
     return render_template("forgot_password.html", error=error, success=success, 
@@ -283,7 +310,7 @@ def forgot_password():
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
     try:
-        reset_record, error_msg = db.verify_password_reset_token(token)
+        reset_record, error_msg = get_db().verify_password_reset_token(token)
         
         if not reset_record:
             return render_template("reset_password.html", error=error_msg or "Invalid token")
@@ -292,12 +319,14 @@ def reset_password(token):
             new_password = request.form["new_password"]
             confirm_password = request.form["confirm_password"]
             
-            if new_password == confirm_password:
-                username = reset_record["username"]
-                db.update_user_password(username, new_password)
-                return render_template("reset_password.html", success=True)
-            else:
+            if new_password != confirm_password:
                 return render_template("reset_password.html", error="Passwords do not match")
+            if not is_strong_password(new_password):
+                return render_template("reset_password.html", error="Password must be at least 8 chars with uppercase, lowercase, number, and special character")
+
+            username = reset_record["username"]
+            get_db().update_user_password(username, new_password)
+            return render_template("reset_password.html", success=True)
         
         return render_template("reset_password.html", token=token)
     
@@ -307,3 +336,11 @@ def reset_password(token):
 if __name__ == "__main__":
     app.run(debug=True)
 
+
+
+@app.errorhandler(Exception)
+def handle_exception(error):
+    if isinstance(error, HTTPException):
+        return error
+    app.logger.exception("Unhandled application error: %s", error)
+    return "Internal Server Error. Check server logs and verify Supabase env vars/migrations.", 500
