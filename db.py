@@ -204,9 +204,6 @@ class DatabaseOps:
             if (
                 keyword_lower in student.get("register_no", "").lower()
                 or keyword_lower in student.get("name", "").lower()
-                or keyword_lower in str(student.get("year_of_joining", "")).lower()
-                or keyword_lower in student.get("class", "").lower()
-                or keyword_lower in student.get("section", "").lower()
             )
         ]
 

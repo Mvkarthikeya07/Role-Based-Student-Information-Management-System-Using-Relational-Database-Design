@@ -7,7 +7,7 @@ from io import BytesIO
 from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")  # Required for login sessions
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 
 
 def get_db() -> DatabaseOps:
@@ -352,10 +352,18 @@ def forgot_password():
         elif step == "change_password":
             # Step 3: Change password
             username = request.form.get("username", "").strip()
+            old_password = request.form.get("old_password", "")
             new_password = request.form.get("new_password", "")
             confirm_password = request.form.get("confirm_password", "")
-            
-            if new_password != confirm_password:
+
+            # Old password must be correct
+            current_auth = get_db().sign_in_user(username, old_password)
+            if not current_auth:
+                error = "Old password is incorrect"
+                show_password_form = True
+                show_reset_form = True
+                username_verified = username
+            elif new_password != confirm_password:
                 error = "Passwords do not match"
                 show_password_form = True
                 show_reset_form = True
@@ -382,15 +390,19 @@ def reset_password(token):
             return render_template("reset_password.html", error=error_msg or "Invalid token")
         
         if request.method == "POST":
+            old_password = request.form.get("old_password", "")
             new_password = request.form["new_password"]
             confirm_password = request.form["confirm_password"]
-            
+
+            username = reset_record["username"]
+            current_auth = get_db().sign_in_user(username, old_password)
+            if not current_auth:
+                return render_template("reset_password.html", error="Old password is incorrect")
             if new_password != confirm_password:
                 return render_template("reset_password.html", error="Passwords do not match")
             if not is_strong_password(new_password):
                 return render_template("reset_password.html", error="Password must be at least 8 chars with uppercase, lowercase, number, and special character")
 
-            username = reset_record["username"]
             get_db().update_user_password(username, new_password)
             return render_template("reset_password.html", success=True)
         

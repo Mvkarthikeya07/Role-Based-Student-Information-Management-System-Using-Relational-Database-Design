@@ -96,16 +96,34 @@
             border-radius: 12px;
             border-color: color-mix(in srgb, var(--text) 15%, transparent);
             background-color: color-mix(in srgb, var(--surface) 94%, transparent);
-            color: var(--text);
+            color: var(--text) !important;
             padding-top: .62rem;
             padding-bottom: .62rem;
+        }
+
+        .form-control::placeholder {
+            color: color-mix(in srgb, var(--text) 55%, transparent);
+            opacity: 1;
+        }
+
+        .theme-dark .form-control::placeholder {
+            color: color-mix(in srgb, #e2e8f0 58%, transparent);
+            opacity: 1;
         }
 
         .form-control:focus, .form-select:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 .22rem var(--ring);
             background-color: var(--surface);
-            color: var(--text);
+            color: var(--text) !important;
+        }
+
+        input[type="date"] {
+            color: var(--text) !important;
+        }
+
+        .theme-dark input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) brightness(1.2);
         }
 
         .btn-modern {
