@@ -2,6 +2,8 @@
 
 import os
 import re
+import random
+import string
 from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
@@ -272,6 +274,60 @@ class DatabaseOps:
             return None, "Token expired"
         return reset_record, None
 
+    def generate_otp(self, length: int = 6) -> str:
+        """Generate a random OTP code."""
+        return ''.join(random.choices(string.digits, k=length))
+
+    def send_verification_email(self, email: str, username: str, otp: str) -> bool:
+        """Store OTP for email verification (mock implementation)."""
+        try:
+            expires_at = datetime.utcnow() + timedelta(minutes=15)
+            data = {
+                "email": email.lower().strip(),
+                "username": username,
+                "otp": otp,
+                "expires_at": expires_at.isoformat(),
+                "verified": False
+            }
+            # Store the OTP in verification_codes table
+            response = self.client.table("verification_codes").insert(data).execute()
+            # In production, you would send an actual email here using SMTP or Supabase email service
+            print(f"[VERIFICATION CODE] Email: {email}, OTP: {otp}, Username: {username}")
+            return True
+        except Exception as e:
+            print(f"Error storing verification code: {e}")
+            return False
+
+    def verify_email_otp(self, email: str, otp: str) -> tuple:
+        """Verify OTP for email address. Returns (success, message, username)."""
+        try:
+            response = self.client.table("verification_codes").select("*").eq("email", email.lower().strip()).eq("otp", otp).execute()
+            
+            if not response.data:
+                return False, "Invalid OTP", None
+            
+            record = response.data[0]
+            expires_at = datetime.fromisoformat(record["expires_at"].replace("Z", "+00:00"))
+            
+            if datetime.utcnow() > expires_at:
+                return False, "OTP expired", None
+            
+            if record.get("verified"):
+                return False, "OTP already used", None
+            
+            # Mark as verified
+            self.client.table("verification_codes").update({"verified": True}).eq("id", record["id"]).execute()
+            
+            return True, "Email verified successfully", record["username"]
+        except Exception as e:
+            print(f"Error verifying OTP: {e}")
+            return False, f"Verification error: {str(e)}", None
+
+    def get_user_email(self, username: str) -> str:
+        """Get email for a username."""
+        user = self.get_user_by_username(username)
+        return user.get("email", "") if user else ""
+
 
 def verify_connection() -> bool:
     """Verify that Supabase connection and key tables are accessible."""
@@ -288,7 +344,7 @@ def seed_default_data() -> bool:
     if not db.get_user_by_username("teacher"):
         db.create_user(
             username="teacher",
-            password="1234",
+            password="Teacher@123",
             email="teacher@example.com",
             role="teacher",
             security_question="What is your first pet's name?",
@@ -298,7 +354,7 @@ def seed_default_data() -> bool:
     if not db.get_user_by_username("student"):
         db.create_user(
             username="student",
-            password="1234",
+            password="Student@456",
             email="student@example.com",
             role="student",
             security_question="What is your first pet's name?",

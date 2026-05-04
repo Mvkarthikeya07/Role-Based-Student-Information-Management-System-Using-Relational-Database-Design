@@ -51,7 +51,26 @@ CREATE INDEX idx_students_class ON students(class);
 CREATE INDEX idx_students_section ON students(section);
 
 -- =====================================================
--- 3. PASSWORD RESET TABLE
+-- 3. VERIFICATION CODES TABLE (OTP for Email Verification)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS verification_codes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT NOT NULL,
+    username TEXT NOT NULL,
+    otp TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    verified_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Create indexes for quick lookups
+CREATE INDEX idx_verification_codes_email ON verification_codes(email);
+CREATE INDEX idx_verification_codes_otp ON verification_codes(otp);
+CREATE INDEX idx_verification_codes_expires_at ON verification_codes(expires_at);
+
+-- =====================================================
+-- 4. PASSWORD RESET TABLE
 -- =====================================================
 CREATE TABLE IF NOT EXISTS password_reset (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -92,6 +111,7 @@ CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
 -- Enable RLS on all tables
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE verification_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE password_reset ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 

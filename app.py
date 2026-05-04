@@ -315,11 +315,14 @@ def change_password():
     username = session["username"]
     role = session.get("role", "student")
     
-    old_password = request.form.get("old_password", "")
     new_password = request.form.get("new_password", "").strip()
     confirm_password = request.form.get("confirm_password", "").strip()
+    otp = request.form.get("otp", "").strip()
+    step = request.form.get("step", "send_code")
     
     db = get_db()
+    user = db.get_user_by_username(username)
+    email = user.get("email", "").strip() if user else ""
     
     def render_dash(error=None, success=None):
         try:
@@ -331,78 +334,110 @@ def change_password():
         template = "teacher_dashboard.html" if role == "teacher" else "student_dashboard.html"
         return render_template(template, students=students, db_error=error, success_msg=success)
 
-    current_auth = db.sign_in_user(username, old_password)
-    if not current_auth:
-        return render_dash(error="Change Password Failed: Old password is incorrect")
+    if step == "send_code":
+        # Send OTP to registered email
+        if not email:
+            return render_dash(error="No email associated with your account")
         
-    if new_password != confirm_password:
-        return render_dash(error="Change Password Failed: New passwords do not match")
+        # Generate and send OTP
+        otp_code = db.generate_otp()
+        if db.send_verification_email(email, username, otp_code):
+            return render_dash(success=f"Verification code sent to {email}. Enter it along with your new password to proceed.")
+        else:
+            return render_dash(error="Failed to send verification code. Please try again.")
+    
+    elif step == "verify_and_update":
+        # Verify OTP and update password
+        if not otp or not new_password or not confirm_password:
+            return render_dash(error="Please enter verification code and new password")
         
-    if not is_strong_password(new_password):
-        return render_dash(error="Change Password Failed: Password must be at least 8 chars with uppercase, lowercase, number, and special character")
+        # Verify OTP
+        success_verify, msg, verified_username = db.verify_email_otp(email, otp)
+        if not success_verify:
+            return render_dash(error=f"Verification failed: {msg}. Please request a new code.")
         
-    try:
-        # Update Supabase auth password using the active user session
-        db.client.auth.update_user({"password": new_password})
-        # Update local profile table
-        db.update_user_password(username, new_password)
-        return render_dash(success="Password updated successfully!")
-    except Exception as e:
-        return render_dash(error=f"Error changing password: {str(e)}")
+        if verified_username != username:
+            return render_dash(error="Verification failed: Email does not match")
+        
+        # Verify passwords match
+        if new_password != confirm_password:
+            return render_dash(error="New passwords do not match")
+        
+        # Verify password strength
+        if not is_strong_password(new_password):
+            return render_dash(error="Password must be at least 8 chars with uppercase, lowercase, number, and special character")
+        
+        try:
+            # Update password
+            db.client.auth.update_user({"password": new_password})
+            db.update_user_password(username, new_password)
+            return render_dash(success="Password updated successfully!")
+        except Exception as e:
+            return render_dash(error=f"Error changing password: {str(e)}")
+    
+    return render_dash(error="Invalid request")
 
 # ---------- Forgot Password ----------
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
     error = None
     success = None
-    show_reset_form = False
-    username_verified = None
-    security_question = None
+    show_email_form = False
     show_password_form = False
+    username_verified = None
+    email_verified = None
     
     if request.method == "POST":
         step = request.form.get("step", "verify_username")
         
         if step == "verify_username":
-            # Step 1: Verify username
+            # Step 1: Verify username and send OTP to email
             username = request.form.get("username", "").strip()
             if not username:
                 error = "Please enter a username"
             else:
                 user = get_db().get_user_by_username(username)
-                
-                if user:
-                    security_question = user["security_question"]
-                    username_verified = username
-                    show_reset_form = True
-                else:
+                if not user:
                     error = "Username not found"
-        
-        elif step == "verify_security":
-            # Step 2: Verify security question
-            username = request.form.get("username", "").strip()
-            security_answer = request.form.get("security_answer", "").lower().strip()
-            
-            user = get_db().get_user_by_username(username)
-            
-            if user:
-                stored_answer = user["security_answer"].lower().strip() if user["security_answer"] else ""
-                if stored_answer == security_answer:
-                    username_verified = username
-                    show_password_form = True
-                    show_reset_form = True
                 else:
-                    error = "Incorrect security answer"
-                    security_question = user["security_question"]
-                    username_verified = username
-                    show_reset_form = True
+                    email = user.get("email", "").strip()
+                    if not email:
+                        error = "No email associated with this account"
+                    else:
+                        # Generate and send OTP
+                        otp = get_db().generate_otp()
+                        if get_db().send_verification_email(email, username, otp):
+                            username_verified = username
+                            email_verified = email
+                            show_email_form = True
+                            success = f"Verification code sent to {email}. Check your email."
+                        else:
+                            error = "Failed to send verification code. Please try again."
+        
+        elif step == "verify_otp":
+            # Step 2: Verify OTP
+            email = request.form.get("email", "").strip()
+            otp = request.form.get("otp", "").strip()
+            
+            if not email or not otp:
+                error = "Please enter email and OTP"
+                email_verified = email
+                show_email_form = True
             else:
-                error = "Username not found"
+                success_verify, msg, username = get_db().verify_email_otp(email, otp)
+                if success_verify:
+                    username_verified = username
+                    email_verified = email
+                    show_password_form = True
+                else:
+                    error = msg
+                    email_verified = email
+                    show_email_form = True
         
         elif step == "change_password":
             # Step 3: Change password
-            username = request.form.get("username", "").strip()
             email = request.form.get("email", "").strip()
+            username = request.form.get("username", "").strip()
             new_password = request.form.get("new_password", "").strip()
             confirm_password = request.form.get("confirm_password", "").strip()
 
@@ -410,25 +445,26 @@ def forgot_password():
             if not user or user.get("email", "").strip().lower() != email.lower():
                 error = "Email verification failed. Incorrect email."
                 show_password_form = True
-                show_reset_form = True
                 username_verified = username
+                email_verified = email
             elif new_password != confirm_password:
                 error = "Passwords do not match"
                 show_password_form = True
-                show_reset_form = True
                 username_verified = username
+                email_verified = email
             elif not is_strong_password(new_password):
                 error = "Password must be at least 8 chars with uppercase, lowercase, number, and special character"
                 show_password_form = True
-                show_reset_form = True
                 username_verified = username
+                email_verified = email
             else:
                 get_db().update_user_password(username, new_password)
                 success = "Password reset successfully! You can now login."
     
     return render_template("forgot_password.html", error=error, success=success, 
-                         show_reset_form=show_reset_form, username_verified=username_verified,
-                         security_question=security_question, show_password_form=show_password_form)
+                         show_email_form=show_email_form,
+                         show_password_form=show_password_form, username_verified=username_verified,
+                         email_verified=email_verified)
 
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
@@ -461,7 +497,8 @@ def reset_password(token):
         return render_template("reset_password.html", error=f"Error: {str(e)}")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+    app.run(debug=debug_mode)
 
 
 

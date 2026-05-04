@@ -17,25 +17,33 @@
 <div class="surface-card mb-4">
     <h5 class="mb-3">Change Password</h5>
     <form class="row g-3" method="POST" action="{{ url_for('change_password') }}">
+        <div class="col-md-4">
+            <button type="submit" name="step" value="send_code" class="btn btn-soft w-100">Send Verification Code</button>
+        </div>
+        <div class="col-md-8">
+            <p class="muted mb-0 small">A verification code will be sent to your registered email.</p>
+        </div>
+        <div class="col-12" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <p class="muted mb-3 small">After receiving the code, enter it with your new password:</p>
+        </div>
         <div class="col-md-3">
-            <div class="input-group">
-                <input type="password" id="dash_old_password" name="old_password" class="form-control" placeholder="Old Password" required>
-                <button class="btn btn-soft" type="button" id="toggle_dash_old_password">Show</button>
-            </div>
+            <input type="text" name="otp" class="form-control" placeholder="6-digit code" maxlength="6">
         </div>
         <div class="col-md-3">
             <div class="input-group">
-                <input type="password" id="dash_new_password" name="new_password" class="form-control" placeholder="New Password" autocomplete="new-password" required>
+                <input type="password" id="dash_new_password" name="new_password" class="form-control" placeholder="New Password" autocomplete="new-password">
                 <button class="btn btn-soft" type="button" id="toggle_dash_new_password">Show</button>
             </div>
         </div>
         <div class="col-md-3">
             <div class="input-group">
-                <input type="password" id="dash_confirm_password" name="confirm_password" class="form-control" placeholder="Confirm New Password" autocomplete="new-password" required>
+                <input type="password" id="dash_confirm_password" name="confirm_password" class="form-control" placeholder="Confirm New Password" autocomplete="new-password">
                 <button class="btn btn-soft" type="button" id="toggle_dash_confirm_password">Show</button>
             </div>
         </div>
-        <div class="col-md-3 d-grid"><button class="btn btn-modern">Update Password</button></div>
+        <div class="col-md-3 d-grid">
+            <button type="submit" name="step" value="verify_and_update" class="btn btn-modern">Update Password</button>
+        </div>
     </form>
 </div>
 
@@ -85,7 +93,6 @@ function attachToggle(inputId, buttonId) {
         button.textContent = isHidden ? 'Hide' : 'Show';
     });
 }
-attachToggle('dash_old_password', 'toggle_dash_old_password');
 attachToggle('dash_new_password', 'toggle_dash_new_password');
 attachToggle('dash_confirm_password', 'toggle_dash_confirm_password');
 </script>
