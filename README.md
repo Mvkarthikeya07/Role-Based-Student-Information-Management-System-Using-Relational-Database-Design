@@ -1,22 +1,22 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/Python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
-<img src="https://img.shields.io/badge/Flask-Backend-000000?style=for-the-badge&logo=flask&logoColor=white"/>
-<img src="https://img.shields.io/badge/SQLite-Relational%20DB-003B57?style=for-the-badge&logo=sqlite&logoColor=white"/>
-<img src="https://img.shields.io/badge/Bootstrap-Responsive%20UI-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white"/>
+<img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
+<img src="https://img.shields.io/badge/Flask-2.3.3-000000?style=for-the-badge&logo=flask&logoColor=white"/>
+<img src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white"/>
+<img src="https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white"/>
 <img src="https://img.shields.io/badge/RBAC-Role%20Based%20Access-DC143C?style=for-the-badge"/>
 <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge"/>
 
 <br/><br/>
 
 # Role-Based Student Information Management System
-### Full-Stack Flask + SQLite Web App · RBAC · Multi-Step Auth · CRUD · CSV Export
+### Full-Stack Flask · Supabase PostgreSQL · RBAC · PBKDF2 Auth · Row Level Security · Vercel Deployment
 
-*A database-centric academic records system implementing role-based access control, session authentication, and multi-step password recovery — built to simulate real-world enterprise IT workflows.*
+*A production-deployed academic records system with role-based access control, PBKDF2 password hashing, Supabase Row Level Security, and serverless deployment on Vercel.*
 
 <br/>
 
-[Overview](#-overview) · [Architecture](#-architecture) · [Roles & Permissions](#-roles--permissions) · [Database Design](#-database-design) · [Screenshots](#-screenshots) · [Installation](#-installation) · [Usage](#-usage) · [Routes](#-route-reference) · [Roadmap](#-roadmap)
+[Overview](#-overview) · [Architecture](#-architecture) · [Roles & Permissions](#-roles--permissions) · [Database Design](#-database-design) · [Auth Flow](#-authentication-flow) · [Screenshots](#-screenshots) · [Setup](#-setup) · [Routes](#-route-reference) · [Deployment](#-vercel-deployment) · [Roadmap](#-roadmap)
 
 </div>
 
@@ -24,72 +24,84 @@
 
 ## Overview
 
-Academic record systems in real organizations are not simple CRUD apps — they enforce access boundaries, protect sensitive data behind authenticated sessions, and provide role-specific workflows. This project replicates that pattern at a clear, understandable scale.
+This is a production-deployed, full-stack student records management system built on **Flask**, **Supabase (PostgreSQL)**, and deployed to **Vercel**. It enforces role-based access control at both the Flask routing layer and the database layer via Supabase **Row Level Security (RLS)** policies.
 
-Built with **Flask** and **SQLite**, the system separates concerns cleanly: teachers get full write access to student records; students get read-only dashboards. Authentication is session-based with a three-step password recovery flow. All student data is exportable to CSV via Pandas.
+The system is not a SQLite demo — it uses a cloud PostgreSQL backend with UUID primary keys, indexed tables, auto-updating `updated_at` triggers, and proper password security via `werkzeug`'s PBKDF2-SHA256 hashing.
 
-**What distinguishes this from a typical student project:**
+**What this system actually implements under the hood:**
 
-- RBAC is enforced at the routing level — role is stored in the session and validated on every protected route, not just the login redirect
-- Password recovery uses a three-step verification chain (username → security question → reset) with a `password_reset` table holding token, `created_at`, and `expires_at` — designed to be extended to time-limited email tokens
-- Multi-field search across name, course, class, and section runs as a single parameterized SQLite query, not client-side filtering
-- CSV export uses Pandas `DataFrame.to_csv()` streamed via Flask's `Response` object with the correct `Content-Disposition` header
+- Passwords hashed with `generate_password_hash(method="pbkdf2:sha256", salt_length=16)` — never stored in plaintext
+- Login accepts both username and email as identifiers, with duplicate-email detection
+- Password policy enforced at registration: minimum 8 characters, uppercase, lowercase, digit, and special character all required
+- Multi-step password recovery: username verification → email + security answer validation → PBKDF2-hashed new password written to Supabase
+- Supabase RLS policies enforce that students and teachers can only access what their role permits — even if Flask routing is bypassed
+- Indian phone number normalization to `+91XXXXXXXXXX` format with 10-digit validation on all student records
+- CSV export streams a Pandas DataFrame via `BytesIO` with correct `Content-Disposition` headers — no temp files written to disk
+- Serverless-compatible: `DatabaseOps` is instantiated lazily per request via Flask's `g` object, avoiding connection issues in Vercel's serverless environment
 
-**Developed during an internship at Rashtriya Ispat Nigam Limited (RINL / Vizag Steel Plant)**, IT & ERP Department, Dec 2024 – Jan 2025.
+**Developed during an internship at Rashtriya Ispat Nigam Limited (RINL) — Vizag Steel Plant**, IT & ERP Department, Dec 2024 – Jan 2025.
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                        Client (Browser)                          │
-│   login.html · teacher_dashboard.html · student_dashboard.html   │
-│   create_account.html · edit.html · forgot/reset_password.html   │
-└──────────────────────────────┬───────────────────────────────────┘
-                               │  HTTP Requests
+┌──────────────────────────────────────────────────────────────────────┐
+│                          Client (Browser)                            │
+│  login · create_account · teacher_dashboard · student_dashboard      │
+│  edit · forgot_password                                              │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │  HTTPS
                                ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                    Flask Backend (app.py)                        │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │               Session & Auth Middleware                  │    │
-│  │   Role validation on every protected route               │    │
-│  │   session['role'] → 'teacher' | 'student'               │    │
-│  └──────────────────────────┬──────────────────────────────┘    │
-│                              │                                   │
-│        ┌─────────────────────┼──────────────────────┐           │
-│        ▼                     ▼                      ▼           │
-│  ┌──────────────┐   ┌─────────────────┐   ┌──────────────────┐  │
-│  │  Auth Routes │   │  Teacher Routes │   │  Student Routes  │  │
-│  │              │   │                 │   │                  │  │
-│  │ /login       │   │ /dashboard      │   │ /student-dash    │  │
-│  │ /register    │   │ /add            │   │ /view-records    │  │
-│  │ /forgot-pw   │   │ /edit/<id>      │   │                  │  │
-│  │ /reset-pw    │   │ /delete/<id>    │   │  Read-only       │  │
-│  │ /logout      │   │ /search         │   │  access only     │  │
-│  └──────┬───────┘   │ /export-csv     │   └──────────────────┘  │
-│         │           └────────┬────────┘                         │
-│         │                    │                                   │
-└─────────┼────────────────────┼───────────────────────────────────┘
-          │                    │
-          ▼                    ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      SQLite Database                             │
-│                       (students.db)                              │
-│                                                                  │
-│   ┌─────────────┐   ┌──────────────┐   ┌────────────────────┐   │
-│   │    users    │   │   students   │   │   password_reset   │   │
-│   │─────────────│   │──────────────│   │────────────────────│   │
-│   │ id          │   │ id           │   │ id                 │   │
-│   │ username    │   │ name         │   │ username           │   │
-│   │ password    │   │ course       │   │ token              │   │
-│   │ email       │   │ class        │   │ created_at         │   │
-│   │ role        │   │ section      │   │ expires_at         │   │
-│   │ security_q  │   │ parent_phone │   └────────────────────┘   │
-│   │ security_a  │   │ parent_email │                            │
-│   └─────────────┘   └──────────────┘                            │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                    Vercel Serverless (app.py)                        │
+│                        Python 3.12 Runtime                           │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              Session & RBAC Middleware                        │   │
+│  │  session['role'] checked on every protected route            │   │
+│  │  Wrong role → redirect to /login                             │   │
+│  └───────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│       ┌──────────────────────┼──────────────────┐                   │
+│       ▼                      ▼                  ▼                   │
+│  ┌─────────────┐   ┌──────────────────┐  ┌────────────────┐        │
+│  │ Auth Routes │   │  Teacher Routes  │  │ Student Routes │        │
+│  │             │   │                  │  │                │        │
+│  │ /login      │   │ /teacher         │  │ /student       │        │
+│  │ /create-acc │   │ /add             │  │ (read-only)    │        │
+│  │ /logout     │   │ /edit/<id>       │  └────────────────┘        │
+│  │ /forgot-pw  │   │ /delete/<id>     │                            │
+│  │ /change-pw  │   │ /search          │                            │
+│  └─────────────┘   │ /export          │                            │
+│                    └──────────────────┘                            │
+│                                                                      │
+│  DatabaseOps instantiated lazily per request via Flask g object      │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │  Supabase Python SDK
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                   Supabase (PostgreSQL + RLS)                        │
+│                                                                      │
+│  ┌─────────────────────┐        ┌──────────────────────────────┐    │
+│  │       users         │        │          students            │    │
+│  │─────────────────────│        │──────────────────────────────│    │
+│  │ id UUID PK          │        │ id UUID PK                   │    │
+│  │ username TEXT UNIQUE│        │ register_no TEXT UNIQUE      │    │
+│  │ password TEXT       │        │ name TEXT                    │    │
+│  │ email TEXT          │        │ year_of_joining DATE         │    │
+│  │ role TEXT (CHECK)   │        │ class TEXT                   │    │
+│  │ security_question   │        │ section TEXT                 │    │
+│  │ security_answer     │        │ parent_phone TEXT (+91...)   │    │
+│  │ created_at TIMESTAMPTZ       │ parent_email TEXT            │    │
+│  │ updated_at TIMESTAMPTZ       │ enrollment_date TIMESTAMPTZ  │    │
+│  │ is_active BOOLEAN   │        │ updated_at TIMESTAMPTZ       │    │
+│  └─────────────────────┘        └──────────────────────────────┘    │
+│                                                                      │
+│  RLS Policies enforce access at DB level, independent of Flask       │
+│  Indexes on: username, email, role, register_no, name, class        │
+│  Triggers: auto-update updated_at on every row UPDATE               │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -103,41 +115,14 @@ Built with **Flask** and **SQLite**, the system separates concerns cleanly: teac
 | Add student records | ✅ | ❌ |
 | Edit student records | ✅ | ❌ |
 | Delete student records | ✅ | ❌ |
-| Search (name / course / class / section) | ✅ | ❌ |
+| Search (register no / name / class / section) | ✅ | ❌ |
 | Export records to CSV | ✅ | ❌ |
-| Password recovery | ✅ | ✅ |
+| Change own password | ✅ | ✅ |
+| Password recovery (forgot password) | ✅ | ✅ |
 
-Role is assigned at account creation and stored in the `users` table. It is loaded into `session['role']` at login and checked on every protected route before processing the request.
-
----
-
-## Authentication Flow
-
-```
-User submits credentials
-        │
-        ▼
-Validate username + password against users table
-        │
-        ├── Failure → redirect to /login with error message
-        │
-        └── Success → store session['user'] and session['role']
-                │
-                ├── role == 'teacher' → redirect to /dashboard
-                │
-                └── role == 'student' → redirect to /student-dash
-```
-
-### Password Recovery (3-Step)
-
-```
-Step 1: Enter username          → verify username exists in users table
-Step 2: Answer security question → validate security_answer matches stored value
-Step 3: Enter new password       → update password in users table
-                                   (token recorded in password_reset table)
-```
-
-The `password_reset` table stores `token`, `created_at`, and `expires_at` — structured to support time-limited email-based OTP recovery as a future upgrade without schema changes.
+Role is enforced at two independent layers:
+1. **Flask routing** — `session['role']` is checked before processing every protected request
+2. **Supabase RLS** — PostgreSQL policies block unauthorized reads/writes at the database level even if routing is bypassed
 
 ---
 
@@ -145,37 +130,97 @@ The `password_reset` table stores `token`, `created_at`, and `expires_at` — st
 
 ### `users`
 
-| Column | Type | Description |
-|---|---|---|
-| `id` | INTEGER PK | Auto-increment primary key |
-| `username` | TEXT UNIQUE | Login identifier |
-| `password` | TEXT | Password (plaintext — see roadmap for bcrypt upgrade) |
-| `email` | TEXT | User email address |
-| `role` | TEXT | `'teacher'` or `'student'` |
-| `security_question` | TEXT | Recovery question |
-| `security_answer` | TEXT | Recovery answer |
+| Column | Type | Constraint | Description |
+|---|---|---|---|
+| `id` | UUID | PK, DEFAULT uuid_generate_v4() | Auto-generated primary key |
+| `username` | TEXT | UNIQUE NOT NULL | Login identifier |
+| `password` | TEXT | NOT NULL | PBKDF2-SHA256 hash (werkzeug) |
+| `email` | TEXT | NOT NULL | Used for password recovery |
+| `role` | TEXT | CHECK IN ('teacher','student') | Access level |
+| `security_question` | TEXT | NOT NULL | Recovery question |
+| `security_answer` | TEXT | NOT NULL | Lowercased and stripped at write time |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Account creation time |
+| `updated_at` | TIMESTAMPTZ | Auto-trigger | Updated on every row change |
+| `is_active` | BOOLEAN | DEFAULT TRUE | Account status flag |
+
+Indexes: `username`, `email`, `role`
 
 ### `students`
 
-| Column | Type | Description |
-|---|---|---|
-| `id` | INTEGER PK | Auto-increment primary key |
-| `name` | TEXT | Student full name |
-| `course` | TEXT | Enrolled course / programme |
-| `class` | TEXT | Class identifier |
-| `section` | TEXT | Section identifier |
-| `parent_phone` | TEXT | Parent / guardian contact number |
-| `parent_email` | TEXT | Parent / guardian email |
+| Column | Type | Constraint | Description |
+|---|---|---|---|
+| `id` | UUID | PK, DEFAULT uuid_generate_v4() | Auto-generated primary key |
+| `register_no` | TEXT | UNIQUE NOT NULL | Student registration number |
+| `name` | TEXT | NOT NULL | Full name |
+| `year_of_joining` | DATE | NOT NULL | Enrollment date |
+| `class` | TEXT | NOT NULL | Year / class (e.g. "II Year") |
+| `section` | TEXT | NOT NULL | Section identifier |
+| `parent_phone` | TEXT | — | Normalized to `+91XXXXXXXXXX` |
+| `parent_email` | TEXT | — | Guardian email |
+| `enrollment_date` | TIMESTAMPTZ | DEFAULT NOW() | Record creation time |
+| `updated_at` | TIMESTAMPTZ | Auto-trigger | Updated on every row change |
 
-### `password_reset`
+Indexes: `register_no`, `name`, `year_of_joining`, `class`, `section`
 
-| Column | Type | Description |
+### Row Level Security Policies
+
+| Table | Operation | Policy |
 |---|---|---|
-| `id` | INTEGER PK | Auto-increment primary key |
-| `username` | TEXT | Associated user account |
-| `token` | TEXT | Reset token (extensible to email OTP) |
-| `created_at` | DATETIME | Token creation timestamp |
-| `expires_at` | DATETIME | Token expiry timestamp |
+| `students` | SELECT | Teachers and students can both read all records |
+| `students` | INSERT | Teachers only |
+| `students` | UPDATE | Teachers only |
+| `students` | DELETE | Teachers only |
+| `users` | SELECT | Users can view their own profile; teachers can view all |
+
+---
+
+## Authentication Flow
+
+### Login
+
+```
+POST /login
+    │
+    ├── Input: username or email + password
+    │
+    ├── Identifier contains '@'? → query by email (raises error if multiple accounts share email)
+    │                           → query by username otherwise
+    │
+    ├── User not found → "Invalid Credentials"
+    │
+    ├── _verify_password(stored_pbkdf2_hash, input_password)
+    │       └── Fails → "Invalid Credentials"
+    │
+    └── Success → session['username'], session['role'] set
+                        │
+                        ├── role == 'teacher' → /teacher
+                        └── role == 'student' → /student
+```
+
+### Password Policy (Registration & Change Password)
+
+Passwords must satisfy all of the following — validated by `is_strong_password()` in `app.py`:
+
+- Minimum 8 characters
+- At least one uppercase letter `[A-Z]`
+- At least one lowercase letter `[a-z]`
+- At least one digit `[0-9]`
+- At least one special character `[^A-Za-z0-9]`
+
+### Password Recovery (3-Step)
+
+```
+Step 1 — POST /forgot-password (step=verify_username)
+    └── Verify username exists in users table
+    └── Retrieve and display associated security question
+
+Step 2 & 3 — POST /forgot-password (step=reset_with_security)
+    ├── Validate email matches the account on record
+    ├── Validate security_answer matches stored value (case-insensitive)
+    ├── Validate new password == confirm_password
+    ├── Enforce is_strong_password() policy
+    └── update_user_password() → PBKDF2-hashed new password written to Supabase
+```
 
 ---
 
@@ -196,43 +241,52 @@ The `password_reset` table stores `token`, `created_at`, and `expires_at` — st
 ### Create Account
 <img width="1366" height="768" alt="Create Account" src="https://github.com/user-attachments/assets/b75758ba-79ac-4218-88fe-04df9cf6fd9d" />
 
+> **Note:** If screenshots appear broken, re-upload them directly to this repository via the GitHub editor to generate repo-scoped CDN URLs.
+
 ---
 
 ## Repository Structure
 
 ```
-student_management_system/
+Role-Based-Student-Information-Management-System/
 │
-├── app.py                       # Flask app — routes, auth, CRUD, export
-├── students.db                  # SQLite database (auto-created on first run)
-├── requirements.txt
+├── app.py                        # Flask app — routes, RBAC, auth, CSV export
+├── db.py                         # Supabase client, DatabaseOps, password hashing
+├── init_db.py                    # Connection verification + default data seeding
+├── supabase_schema.sql           # Full PostgreSQL schema with RLS, indexes, triggers
+├── vercel.json                   # Vercel serverless deployment config (Python 3.12)
+├── requirements.txt              # Python dependencies
+├── .gitignore
 ├── README.md
 └── LICENSE
 │
-├── templates/
-│   ├── login.html               # Login form
-│   ├── create_account.html      # Account registration
-│   ├── forgot_password.html     # Step 1 & 2 of password recovery
-│   ├── reset_password.html      # Step 3 — new password entry
-│   ├── teacher_dashboard.html   # Full CRUD dashboard
-│   ├── student_dashboard.html   # Read-only records view
-│   └── edit.html                # Edit student record form
+└── templates/
+    ├── base.html                 # Shared layout
+    ├── login.html                # Login form (username or email)
+    ├── create_account.html       # Registration with password policy + security question
+    ├── forgot_password.html      # 3-step password recovery
+    ├── teacher_dashboard.html    # CRUD dashboard with search and export
+    ├── student_dashboard.html    # Read-only records view
+    └── edit.html                 # Edit student record form
 ```
 
 ---
 
-## Installation
+## Setup
 
-**Prerequisites:** Python 3.8+, pip
+### Prerequisites
 
-**1. Clone the repository**
+- Python 3.12+
+- A [Supabase](https://supabase.com) project with the schema applied
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Mvkarthikeya07/Role-Based-Student-Information-Management-System-Using-Relational-Database-Design
-cd student-management-system
+cd Role-Based-Student-Information-Management-System-Using-Relational-Database-Design-main
 ```
 
-**2. Create and activate a virtual environment**
+### 2. Create and activate a virtual environment
 
 ```bash
 python -m venv venv
@@ -244,45 +298,51 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-**3. Install dependencies**
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-**4. Run the application**
+### 4. Configure Supabase environment variables
+
+Create a `.env` file in the project root:
+
+```env
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_KEY=your-service-role-key-here
+FLASK_SECRET_KEY=your-random-secret-key
+FLASK_DEBUG=False
+```
+
+> Use the **service_role** key (not the `anon` key) — required for RLS bypass and password updates.
+
+### 5. Apply the database schema
+
+Run `supabase_schema.sql` in your Supabase project's SQL editor to create tables, indexes, RLS policies, and triggers.
+
+### 6. Initialize with default data (optional)
+
+```bash
+python init_db.py
+```
+
+Creates default `teacher` / `student` accounts and 5 sample student records if the tables are empty.
+
+### 7. Run the application
 
 ```bash
 python app.py
 ```
 
-**5. Open in browser**
+Open: `http://127.0.0.1:5000/login`
 
-```
-http://127.0.0.1:5000/login
-```
+**Default credentials (after seeding):**
 
-The SQLite database (`students.db`) is created automatically on first run. No manual schema setup required.
-
----
-
-## Usage
-
-**Register an account** at `/register`, selecting either the Teacher or Student role.
-
-**Teacher workflow:**
-- Log in → Teacher Dashboard
-- Add, edit, or delete student records
-- Use the search bar to filter by name, course, class, or section
-- Export the full student list to CSV via the export button
-
-**Student workflow:**
-- Log in → Student Dashboard
-- View student records in read-only mode
-
-**Forgot your password?**
-- Navigate to `/forgot-password`
-- Complete the three-step recovery: username → security question → new password
+| Role | Username | Password |
+|---|---|---|
+| Teacher | `teacher` | `Teacher@123` |
+| Student | `student` | `Student@456` |
 
 ---
 
@@ -290,20 +350,50 @@ The SQLite database (`students.db`) is created automatically on first run. No ma
 
 | Method | Route | Role | Description |
 |---|---|---|---|
-| `GET` | `/login` | Public | Login page |
-| `POST` | `/login` | Public | Authenticate user, set session |
-| `GET` | `/register` | Public | Account creation form |
-| `POST` | `/register` | Public | Create user in `users` table |
-| `GET` | `/logout` | Any | Clear session, redirect to login |
-| `GET` | `/dashboard` | Teacher | Teacher dashboard with student list |
+| `GET` | `/` | Any | Redirect based on session role |
+| `GET/POST` | `/login` | Public | Authenticate (username or email) |
+| `GET/POST` | `/create-account` | Public | Register with password policy + security question |
+| `GET` | `/logout` | Any | Clear session |
+| `GET` | `/teacher` | Teacher | Dashboard with full student list |
 | `POST` | `/add` | Teacher | Insert new student record |
-| `GET/POST` | `/edit/<id>` | Teacher | Fetch and update student record |
-| `POST` | `/delete/<id>` | Teacher | Delete student record by ID |
-| `GET` | `/search` | Teacher | Multi-field search query |
-| `GET` | `/export-csv` | Teacher | Stream CSV via Pandas + Flask Response |
-| `GET` | `/student-dash` | Student | Read-only student records view |
-| `GET/POST` | `/forgot-password` | Public | Steps 1 & 2 of password recovery |
-| `GET/POST` | `/reset-password` | Public | Step 3 — password update |
+| `GET/POST` | `/edit/<id>` | Teacher | Fetch and update student by UUID |
+| `GET` | `/delete/<id>` | Teacher | Delete student by UUID |
+| `POST` | `/search` | Teacher | Keyword search across register_no, name, class, section |
+| `GET` | `/export` | Teacher | Stream CSV via Pandas BytesIO |
+| `GET` | `/student` | Student | Read-only records view |
+| `POST` | `/change-password` | Teacher/Student | Change password with old password verification |
+| `GET/POST` | `/forgot-password` | Public | 3-step password recovery |
+
+---
+
+## Vercel Deployment
+
+The project is configured for serverless deployment on Vercel via `vercel.json`:
+
+```json
+{
+  "version": 2,
+  "builds": [{ "src": "app.py", "use": "@vercel/python", "config": { "pythonVersion": "3.12" } }],
+  "routes": [{ "src": "/(.*)", "dest": "app.py" }]
+}
+```
+
+**To deploy:**
+
+```bash
+npm install -g vercel
+vercel
+```
+
+Set the following environment variables in the Vercel dashboard under **Project Settings → Environment Variables**:
+
+| Variable | Value |
+|---|---|
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_KEY` | Your service_role key |
+| `FLASK_SECRET_KEY` | A random secret string |
+
+The `DatabaseOps` object is instantiated per-request via Flask's `g` object, making it compatible with Vercel's stateless serverless execution model.
 
 ---
 
@@ -311,40 +401,40 @@ The SQLite database (`students.db`) is created automatically on first run. No ma
 
 | Layer | Technology |
 |---|---|
-| Backend | Python, Flask |
-| Database | SQLite (`sqlite3` via Flask-SQLAlchemy or direct) |
+| Backend | Python 3.12, Flask 2.3.3 |
+| Database | Supabase (PostgreSQL) with RLS |
+| ORM / DB Client | Supabase Python SDK v2 |
+| Password Security | `werkzeug.security` PBKDF2-SHA256 |
 | Templating | Jinja2 (server-side rendering) |
 | Frontend | HTML, Bootstrap |
-| Data Export | Pandas (`DataFrame.to_csv`) |
-| Session Auth | Flask `session` (server-side) |
+| Data Export | Pandas + BytesIO (in-memory CSV) |
+| Deployment | Vercel Serverless (Python 3.12) |
+| Environment | `python-dotenv` |
 
 ---
 
 ## Known Limitations
 
-These are documented openly and are candidates for the roadmap below:
-
-| Limitation | Impact | Fix |
+| Limitation | Impact | Planned Fix |
 |---|---|---|
-| Passwords stored in plaintext | Security risk | `bcrypt` hashing |
 | No CSRF protection | Vulnerable to cross-site request forgery | `Flask-WTF` CSRF tokens |
-| Security questions are static | Weak recovery mechanism | Email OTP via `Flask-Mail` |
+| Security answers stored as plaintext | Can be read if DB is compromised | Hash answers with bcrypt |
 | No AJAX / live updates | Full page reload on every action | Fetch API + JSON endpoints |
-| SQLite not suited for concurrency | Breaks under multi-user load | Migrate to PostgreSQL / MySQL |
+| No email OTP — recovery uses security question | Weaker than email-based reset | `Flask-Mail` + time-limited tokens |
+| No rate limiting on login | Brute-force vulnerability | `Flask-Limiter` |
 
 ---
 
 ## Roadmap
 
-- [ ] Password hashing with `bcrypt`
 - [ ] CSRF protection via `Flask-WTF`
 - [ ] Email-based OTP password recovery (`Flask-Mail`)
+- [ ] Rate limiting on `/login` (`Flask-Limiter`)
 - [ ] Admin role with user management capabilities
 - [ ] Attendance and grading module
 - [ ] Dashboard analytics with Chart.js
 - [ ] REST API refactor + React frontend
-- [ ] Migration to PostgreSQL with `Flask-Migrate`
-- [ ] Docker containerization
+- [ ] Argon2 password hashing upgrade
 
 ---
 
@@ -371,5 +461,5 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 <div align="center">
-  <sub>Built during enterprise IT exposure · Designed for clarity, extensibility, and real-world relevance.</sub>
+  <sub>Built during enterprise IT exposure · Supabase-backed · Vercel-deployed · Production-ready security.</sub>
 </div>
