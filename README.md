@@ -182,19 +182,19 @@ The `password_reset` table stores `token`, `created_at`, and `expires_at` — st
 ## Screenshots
 
 ### Login Page
-![Login Page](https://github.com/user-attachments/assets/89f0073f-b3c9-4588-99a4-cb76d4c42894)
+<img width="1366" height="768" alt="Login Page" src="https://github.com/user-attachments/assets/89f0073f-b3c9-4588-99a4-cb76d4c42894" />
 
 ### Teacher Dashboard
-![Teacher Dashboard](https://github.com/user-attachments/assets/fd273bdc-a06e-4d5f-ac4b-6102e41d7b9d)
+<img width="1366" height="768" alt="Teacher Dashboard" src="https://github.com/user-attachments/assets/fd273bdc-a06e-4d5f-ac4b-6102e41d7b9d" />
 
 ### Student Dashboard
-![Student Dashboard](https://github.com/user-attachments/assets/90640182-f1ec-46fd-bc55-d8bca7bb9fff)
+<img width="1366" height="768" alt="Student Dashboard" src="https://github.com/user-attachments/assets/90640182-f1ec-46fd-bc55-d8bca7bb9fff" />
 
 ### Edit Student Record
-![Edit Student](https://github.com/user-attachments/assets/5d842889-2a30-4939-9899-ae6433f33a31)
+<img width="1366" height="768" alt="Edit Student Record" src="https://github.com/user-attachments/assets/5d842889-2a30-4939-9899-ae6433f33a31" />
 
 ### Create Account
-![Create Account](https://github.com/user-attachments/assets/b75758ba-79ac-4218-88fe-04df9cf6fd9d)
+<img width="1366" height="768" alt="Create Account" src="https://github.com/user-attachments/assets/b75758ba-79ac-4218-88fe-04df9cf6fd9d" />
 
 ---
 
