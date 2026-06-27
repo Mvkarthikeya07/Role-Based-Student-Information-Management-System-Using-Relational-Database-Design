@@ -19,6 +19,8 @@ This project goes beyond a basic CRUD application by implementing:
 
 💡 This system simulates a real-world academic ERP module, demonstrating how structured data systems, role-based access, and backend-driven workflows are implemented in enterprise environments.
 
+---
+
 ## 🏢 Internship & Project Context
 
 **Organization:** Rashtriya Ispat Nigam Limited (Vizag Steel Plant)  
