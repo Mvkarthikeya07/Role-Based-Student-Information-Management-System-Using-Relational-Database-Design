@@ -1,4 +1,4 @@
-# 🎓 Role-Based Student Information Management Syste
+# 🎓 Role-Based Student Information Management System
 
 ## 🚀 Enterprise-Style DBMS Web Application with Role-Based Access Control
 
