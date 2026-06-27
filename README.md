@@ -34,6 +34,8 @@ This project reflects **hands-on exposure to enterprise workflows**, including:
 * Role-based system design
 * Backend-driven application architecture
 
+🔗 **Certificate:** [View on LinkedIn](https://www.linkedin.com/posts/m-v-karthikeya-b26a2131b_internship-databasemanagement-dbms-activity-7354786606924357632-7TfI?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFEhlw4BT-6V0rnLIZSzBIoK7YvV2QlbHLc)
+
 ```
 ---
 
