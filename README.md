@@ -19,8 +19,6 @@ This project goes beyond a basic CRUD application by implementing:
 
 💡 This system simulates a real-world academic ERP module, demonstrating how structured data systems, role-based access, and backend-driven workflows are implemented in enterprise environments.
 
-```
-
 ## 🏢 Internship & Project Context
 
 **Organization:** Rashtriya Ispat Nigam Limited (Vizag Steel Plant)  
@@ -36,7 +34,6 @@ This project reflects **hands-on exposure to enterprise workflows**, including:
 
 🔗 **Certificate:** [View on LinkedIn](https://www.linkedin.com/posts/m-v-karthikeya-b26a2131b_internship-databasemanagement-dbms-activity-7354786606924357632-7TfI?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFEhlw4BT-6V0rnLIZSzBIoK7YvV2QlbHLc)
 
-```
 ---
 
 ## 🎯 Objectives
